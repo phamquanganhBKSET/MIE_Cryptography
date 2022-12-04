@@ -1,9 +1,12 @@
 import math
+import numpy as np
 import global_params
 import cat_params
 from fxpmath import Fxp
 
 # Function: XOR two binary strings
+# a, b: Operators (string)
+# Return: a XOR b (string)
 def xor(a, b):
     ans = ""
      
@@ -19,6 +22,10 @@ def xor(a, b):
     return ans
 
 # Function: MIE Bit Manipulation
+# kC: Cipher text
+# kI: Plain text
+# output_size: Size of output list
+# Return: Bit string after Bit Manipulation
 def MIE_Bit_Manipulation(kC, kP, output_size):
     E1 = ''
     E2 = ''
@@ -46,17 +53,25 @@ def MIE_Bit_Manipulation(kC, kP, output_size):
         E = xor(E, T[i*output_size:(i+1)*output_size])
     return E
 
-# Function: Bit arrangement
-# Y: List of numpy array
-# B: String
-def bit_arrangement(Y: list, B: str):
-    B_fliplr = B[::-1] # [start:stop:step]
-    matrix_B = B_fliplr.split('')
-    heigh_Y = Y[0].shape[1]
-    width_Y = Y[0].shape[0]
+# Function: Bit arrangement 1D to nD - from 1D matrix to nD matrix
+# Y: Rule of bit arrangement (list of numpy arrays)
+# B: Source bit-string array (string array-list of strings)
+# Return: Destination bit-string array (string array or list of strings)
+def bit_rearrangement_1d_to_nd(Y: list, B) -> list:
+    # Flip left/right verison of B
+    B_fliplr = B.copy()
+    for i in range(len(B_fliplr)):
+        B_fliplr[i] = B[i][::-1] # [start:stop:step]
+
+    matrix_B = [['']]*len(B_fliplr)
+    for i in range(len(matrix_B)):
+        matrix_B[i] = [*B_fliplr[i]] # Unpack string to a list
+
+    # Y.shape
+    width_Y = Y[0].shape[1]
     depth_Y = len(Y)
 
-    A1 = []
+    A1 = [[''] * width_Y] * depth_Y # size = (depth_Y, width_Y): # [['', '',..., ''], ['', '',..., ''],..., ['', '',..., '']]
 
     for j in range(width_Y):
         for k in range(depth_Y):
@@ -65,8 +80,114 @@ def bit_arrangement(Y: list, B: str):
             elif ((Y[k][0][j] == 100) & (Y[k][1][j] == 100)):
                 A1[k][j] = '1'
             else:
-                A1[k][j] = matrix_B[Y[k][0][j]][Y[k][1][j]]
+                A1[k][j] = matrix_B[Y[k][0][j]-1][Y[k][1][j]-1]
+
+    # Result: New string array (list of string)
+    A = []
+    for k in range(depth_Y):
+        A.append(''.join(A1[k]))
+
+    return A
+
+# Function: Bit arrangement MIE nD
+# Y: Rule of bit arrangement (list of numpy arrays)
+# B: Source bit-string array (string array or list of strings)
+# Return: Destination bit-string array (string array or list of strings)
+def bit_rearrangement_MIE_nd(Y: list, B) -> list:
+    #Size of B
+    height_B = len(B)
+    matrix_B = [['']] * height_B # [[''], [''],..., ['']]
+    for i in range(height_B):
+        matrix_B[i] = [*B[i]] # List of bits
+    
+    # Y.shape
+    width_Y = Y[0].shape[1]
+    depth_Y = len(Y)
+
+    A1 = [[''] * width_Y] * depth_Y # size = (depth_Y, width_Y): # [['', '',..., ''], ['', '',..., ''],..., ['', '',..., '']]
+
+    for j in range(width_Y):
+        for k in range(depth_Y):
+            if ((Y[k][0][j] == 0) & (Y[k][1][j] == 0)):
+                A1[k][j] = '0'
+            else:
+                A1[k][j] = matrix_B[Y[k][0][j]-1][Y[k][1][j]-1]
+
+    # Result: New string array (list of string)
+    A = []
+    for k in range(depth_Y):
+        A.append(''.join(A1[k]))
+
+    return A
+
+
+# Function: Cat chaostic map
+# pq: gamma (fixed-point numbers array)
+# xy: Xn (fixed-point numbers array - numpy array with dtype = Fxp)
+# N: Number of bits to present xy (float)
+# Return: Numpy array with dtype = Fxp
+def Cat_fi(pq, xy: np.ndarray, N):
+    xy_out = np.copy(xy)
+    xy_out[0][0] = Fxp(xy[0][0] + pq[0][0]*xy[1][0] - math.floor(xy[0][0] + pq[0][0]*xy[1][0]),0, N, N-1)
+    xy_out[1][0] = Fxp(pq[1][0]*xy[0][0]+(pq[0][0]*pq[1][0]+1)*xy[1][0] - math.floor(pq[1][0]*xy[0][0]+(pq[0][0]*pq[1][0]+1)*xy[1][0]),0, N, N-1)
+    return xy_out
 
 # Function: PCM Cat map
-def PCM_Cat(E, R):
+# E: Result after Bit Manipulation (string)
+# R: Number of iterations (integer)
+# Return: Numpy array with dtype = Fxp
+def PCM_Cat(E: str, R):
+    delta_gamma = bit_rearrangement_1d_to_nd(cat_params.Y1_FAST_Cat, [E])
+    gamma_tmp = np.copy(cat_params.Gamma0_Cat)
+    for i in range(len(gamma_tmp)):
+        gamma_tmp_bin = xor(gamma_tmp[i][0].bin(), delta_gamma[i])
+        gamma_tmp[i][0] = Fxp('0b' + gamma_tmp_bin, False, cat_params.m2_cat, cat_params.m2_cat - 6)
+
+    delta_X = bit_rearrangement_1d_to_nd(cat_params.Y3_FAST_Cat, [E])
+    Xn_tmp = np.copy(cat_params.IV0_Cat)
+    for i in range(len(Xn_tmp)):
+        Xn_tmp_bin = xor(Xn_tmp[i][0].bin(), delta_X[i])
+        Xn_tmp[i][0] = Fxp('0b' + Xn_tmp_bin, False, cat_params.m1_cat, cat_params.m1_cat - 1)
+
+    for r in range(R):
+        X_r = Cat_fi(gamma_tmp, Xn_tmp, cat_params.m1_cat)
+        Xn_tmp = X_r
+
+        delta_gamma = bit_rearrangement_MIE_nd(cat_params.Y2_FAST_Cat, [X_r[0][0].bin(), X_r[1][0].bin()])
+        for i in range(len(gamma_tmp)):
+            gamma_tmp_bin = xor(gamma_tmp[i][0].bin(), delta_gamma[i])
+            gamma_tmp[i][0] = Fxp('0b' + gamma_tmp_bin, False, cat_params.m2_cat, cat_params.m2_cat - 6)
+
+        delta_X = bit_rearrangement_MIE_nd(cat_params.Y4_FAST_Cat, [X_r[0][0].bin(), X_r[1][0].bin()])
+        for i in range(len(Xn_tmp)):
+            Xn_tmp_bin = xor(Xn_tmp[i][0].bin(), delta_X[i])
+            Xn_tmp[i][0] = Fxp('0b' + Xn_tmp_bin, False, cat_params.m1_cat, cat_params.m1_cat - 1)
+    
+    return X_r
+
+# Function: 
+# Xn: 
+# Yp_MN: 
+# Y_inter_images_p: Number of images at the input
+# NamePCM: 
+# Return: 1. XYnew: 
+#         2. pseudoVal_string_C: 
+#         3. pseudoVal_string_Cx: 
+def MIE_FAST_XYnew_pseudoVal(Xn, XY, Yp_MN, Y_inter_images_p, NamePCM = 'Cat'):
+    if (NamePCM == 'Cat'):
+        Yd_C = np.copy(cat_params.Yd_C_Cat)
+        Yd_Cx = np.copy(cat_params.Yd_Cx_Cat)
+    
+
+# Function: 
+# kI: 
+# XY: 
+# XY_new: 
+# pseudoVal_string_C: 
+# pseudoVal_string_Cx: 
+# kC_minus: 
+# Return: 1. kC_ij: 
+#         2. kP_plus: 
+#         3. kI: 
+def MIE_FAST_Perm_and_Diff_pixel(kI, XY, XYnew, pseudoVal_string_C, pseudoVal_string_Cx, kC_minus):
     pass

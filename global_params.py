@@ -1,5 +1,5 @@
 import numpy as np
-from rig.type_casts import float_to_fp, fp_to_float
+from rig.type_casts import float_to_fp
 
 K       = 8 # Number of images
 k2      = 8 # Word length in bits of kP0 and kC0
