@@ -170,7 +170,7 @@ def PCM_Cat(E: str, R):
 # Yp_MN: 
 # Y_inter_images_p: Number of images at the input
 # NamePCM: 
-# Return: 1. XYnew: 
+# Return: 1. XY_new: 
 #         2. pseudoVal_string_C: 
 #         3. pseudoVal_string_Cx: 
 def MIE_FAST_XYnew_pseudoVal(Xn, XY, Yp_MN, Y_inter_images_p, NamePCM = 'Cat'):
@@ -178,6 +178,46 @@ def MIE_FAST_XYnew_pseudoVal(Xn, XY, Yp_MN, Y_inter_images_p, NamePCM = 'Cat'):
         Yd_C = np.copy(cat_params.Yd_C_Cat)
         Yd_Cx = np.copy(cat_params.Yd_Cx_Cat)
     
+    pseudoVal_string_C = bit_rearrangement_MIE_nd(Yd_C, [Xn[0][0].bin(), Xn[1][0].bin()])
+    pseudoVal_string_Cx = bit_rearrangement_MIE_nd(Yd_Cx, [Xn[0][0].bin(), Xn[1][0].bin()])
+
+    # Xn.shape
+    height_Xn = Xn.shape[0]
+    matrix_Xn = [['']] * height_Xn # [[''], [''],..., ['']]
+    for i in range(height_Xn):
+        matrix_Xn[i] = [*Xn[i][0].bin()] # List of bits
+
+    # Yp_MN.shape
+    width_Yp_MN = Yp_MN[0].shape[1]
+
+    A1 = [[''] * width_Yp_MN] * global_params.K # size = (global_params.K, width_Yp_MN): # [['', '',..., ''], ['', '',..., ''],..., ['', '',..., '']]
+
+    for j in range(width_Yp_MN):
+        for k in range(global_params.K):
+            A1[k][j] = matrix_Xn[Yp_MN[k][0][j]-1][Yp_MN[k][1][j]-1]
+
+    # Y_inter_images_p.shape
+    width_Y_inter_images_p = Y_inter_images_p[0].shape[1]
+
+    A2 = [[''] * width_Y_inter_images_p] * global_params.K # size = (global_params.K, width_Y_inter_images_p): # [['', '',..., ''], ['', '',..., ''],..., ['', '',..., '']]
+
+    for j in range(width_Y_inter_images_p):
+        for k in range(global_params.K):
+            A2[k][j] = matrix_Xn[Y_inter_images_p[k][0][j]-1][Y_inter_images_p[k][1][j]-1]
+
+    # XYnew
+    XY_new = []
+
+    image_k = Fxp(0, 0, math.log2(global_params.K), 0)
+
+    for k in range(global_params.K):
+        X_new = Fxp('0b' + ''.join(A1[k][0:math.log2(global_params.M)]), 0, math.log2(global_params.M), 0)
+        X_new = X_new + 1
+        Y_new = Fxp('0b' + ''.join(A1[k][math.log2(global_params.M):]), 0, math.log2(global_params.N), 0)
+        Y_new = X_new + 1
+
+        image_k = image_k + 1 # if image_k = k -> Permutation in internal of image
+        
 
 # Function: 
 # kI: 
