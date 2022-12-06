@@ -165,11 +165,12 @@ def PCM_Cat(E: str, R):
     
     return X_r
 
-# Function: 
-# Xn: 
-# Yp_MN: 
-# Y_inter_images_p: Number of images at the input
-# NamePCM: 
+# Function: Find new XY to pass to Permutation and Diffusion (XYk for k = 1...K)
+# Xn: X_R (numpy array with dtype = Fxp)
+# XY: Current i and j (list [i, j])
+# Yp_MN: To find the next i and j (list of numpy arrays)
+# Y_inter_images_p: To find k (list of numpy arrays)
+# NamePCM: Name of PCM function to use (string)
 # Return: 1. XY_new: 
 #         2. pseudoVal_string_C: 
 #         3. pseudoVal_string_Cx: 
@@ -190,44 +191,74 @@ def MIE_FAST_XYnew_pseudoVal(Xn, XY, Yp_MN, Y_inter_images_p, NamePCM = 'Cat'):
     # Yp_MN.shape
     width_Yp_MN = Yp_MN[0].shape[1]
 
-    A1 = [[''] * width_Yp_MN] * global_params.K # size = (global_params.K, width_Yp_MN): # [['', '',..., ''], ['', '',..., ''],..., ['', '',..., '']]
+    XY_choose = [[''] * width_Yp_MN] * global_params.K # size = (global_params.K, width_Yp_MN): # [['', '',..., ''], ['', '',..., ''],..., ['', '',..., '']]
 
     for j in range(width_Yp_MN):
         for k in range(global_params.K):
-            A1[k][j] = matrix_Xn[Yp_MN[k][0][j]-1][Yp_MN[k][1][j]-1]
+            XY_choose[k][j] = matrix_Xn[Yp_MN[k][0][j]-1][Yp_MN[k][1][j]-1]
 
     # Y_inter_images_p.shape
     width_Y_inter_images_p = Y_inter_images_p[0].shape[1]
 
-    A2 = [[''] * width_Y_inter_images_p] * global_params.K # size = (global_params.K, width_Y_inter_images_p): # [['', '',..., ''], ['', '',..., ''],..., ['', '',..., '']]
+    K_choose = [[''] * width_Y_inter_images_p] * global_params.K # size = (global_params.K, width_Y_inter_images_p): # [['', '',..., ''], ['', '',..., ''],..., ['', '',..., '']]
 
     for j in range(width_Y_inter_images_p):
         for k in range(global_params.K):
-            A2[k][j] = matrix_Xn[Y_inter_images_p[k][0][j]-1][Y_inter_images_p[k][1][j]-1]
+            K_choose[k][j] = matrix_Xn[Y_inter_images_p[k][0][j]-1][Y_inter_images_p[k][1][j]-1]
 
     # XYnew
     XY_new = []
 
-    image_k = Fxp(0, 0, math.log2(global_params.K), 0)
-
     for k in range(global_params.K):
-        X_new = Fxp('0b' + ''.join(A1[k][0:math.log2(global_params.M)]), 0, math.log2(global_params.M), 0)
-        X_new = X_new + 1
-        Y_new = Fxp('0b' + ''.join(A1[k][math.log2(global_params.M):]), 0, math.log2(global_params.N), 0)
-        Y_new = X_new + 1
+        X_new = Fxp('0b' + ''.join(XY_choose[k][0:math.log2(global_params.M)]), 0, math.log2(global_params.M), 0)
+        # X_new = X_new + 1
+        Y_new = Fxp('0b' + ''.join(XY_choose[k][math.log2(global_params.M):]), 0, math.log2(global_params.N), 0)
+        # Y_new = X_new + 1
 
-        image_k = image_k + 1 # if image_k = k -> Permutation in internal of image
+        image_k = Fxp('0b' + ''.join(K_choose[k][:]), 0, math.log2(global_params.K), 0)
+        # image_k = image_k + 1 # if image_k = k -> Permutation in internal of image
+
+        XY_new_in_front_of_XY_1_pixel  = (((X_new == XY[0]) & (Y_new == XY[1] - 1)) | ((X_new == XY[0] - 1) & (Y_new == global_params.N - 1) & (XY[1] == 1)))
+        XY_new_after_XY_1_pixel        = (((XY_new == XY[0]) & (Y_new == XY[1] + 1)) | ((X_new == XY[0] + 1) & (Y_new == 1) & (XY[1] == global_params.N - 1)))
+        XY_new_is_XY                   = ((X_new == XY[0]) & (Y_new == XY[1]))
+        XY_new_in_front_of_XY_2_pixels = ((X_new == XY[0]) & (Y_new == XY[1] - 2)) | ((X_new == XY[0] - 1) & (Y_new == global_params.N - 1) & (XY[1] == 2)) | ((X_new == XY[0]) & (Y_new == global_params.N - 2) & (XY[1] == 1))
+        XY_new_after_XY_2_pixels       = ((X_new == XY[0]) & (Y_new == XY[1] + 2)) | ((X_new == XY[0] + 1) & (Y_new == 1) & (XY[1] == global_params.N - 2)) | ((X_new == XY[0] + 1) & (Y_new == 2) & (XY[1] == global_params.N - 1))
         
+        if ((image_k == k) & (XY_new_in_front_of_XY_1_pixel | XY_new_after_XY_1_pixel | XY_new_is_XY | XY_new_in_front_of_XY_2_pixels | XY_new_after_XY_2_pixels)):
+            if (X_new < global_params.M - 1):
+                X_New = X_New + 1
+            else:
+                X_New = X_New - 1
 
-# Function: 
-# kI: 
-# XY: 
+        XY_new = XY_new.append([np.uint16(X_new), np.uint16(Y_new), np.uint8(image_k)])
+
+    return XY_new, pseudoVal_string_C, pseudoVal_string_Cx
+
+# Function: MIE Permutation and Diffusion of Encryption processing
+# kI: Images
+# XY: Current i and j (list [i, j])
 # XY_new: 
 # pseudoVal_string_C: 
 # pseudoVal_string_Cx: 
-# kC_minus: 
+# kC_minus: kC-
 # Return: 1. kC_ij: 
 #         2. kP_plus: 
 #         3. kI: 
-def MIE_FAST_Perm_and_Diff_pixel(kI, XY, XYnew, pseudoVal_string_C, pseudoVal_string_Cx, kC_minus):
+def MIE_FAST_Perm_and_Diff_pixel_ENC(kI, XY, XYnew, pseudoVal_string_C, pseudoVal_string_Cx, kC_minus):
+    i = XY[0]
+    j = XY[1]
+
+    
+
+# Function: MIE Permutation and Diffusion of Decryption processing
+# kI: Images
+# XY: Current i and j (list [i, j])
+# XY_new: 
+# pseudoVal_string_C: 
+# pseudoVal_string_Cx: 
+# kC_minus: kC-
+# Return: 1. kC_ij: 
+#         2. kP_plus: 
+#         3. kI: 
+def MIE_FAST_Perm_and_Diff_pixel_DEC(kI, XY, XYnew, pseudoVal_string_C, pseudoVal_string_Cx, kC_minus):
     pass
