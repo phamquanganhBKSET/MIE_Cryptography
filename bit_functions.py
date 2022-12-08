@@ -142,16 +142,20 @@ def Cat_fi(pq, xy: np.ndarray, N):
 
 # Function: PCM Cat map
 # E: Result after Bit Manipulation (string)
+# Y1_FAST_Cat: Rule of bit arrangement (list of numpy arrays)
+# Y2_FAST_Cat: Rule of bit arrangement (list of numpy arrays)
+# Y3_FAST_Cat: Rule of bit arrangement (list of numpy arrays)
+# Y4_FAST_Cat: Rule of bit arrangement (list of numpy arrays)
 # R: Number of iterations (integer)
 # Return: Numpy array with dtype = Fxp
-def PCM_Cat(E: str, R):
-    delta_gamma = bit_rearrangement_1d_to_nd(cat_params.Y1_FAST_Cat, [E])
+def PCM_Cat(E: str, Y1_FAST_Cat, Y2_FAST_Cat, Y3_FAST_Cat, Y4_FAST_Cat, R):
+    delta_gamma = bit_rearrangement_1d_to_nd(Y1_FAST_Cat, [E])
     gamma_tmp = np.copy(cat_params.Gamma0_Cat)
     for i in range(len(gamma_tmp)):
         gamma_tmp_bin = xor(gamma_tmp[i][0].bin(), delta_gamma[i])
         gamma_tmp[i][0] = Fxp('0b' + gamma_tmp_bin, False, cat_params.m2_cat, cat_params.m2_cat - 6)
 
-    delta_X = bit_rearrangement_1d_to_nd(cat_params.Y3_FAST_Cat, [E])
+    delta_X = bit_rearrangement_1d_to_nd(Y3_FAST_Cat, [E])
     Xn_tmp = np.copy(cat_params.IV0_Cat)
     for i in range(len(Xn_tmp)):
         Xn_tmp_bin = xor(Xn_tmp[i][0].bin(), delta_X[i])
@@ -161,12 +165,12 @@ def PCM_Cat(E: str, R):
         X_r = Cat_fi(gamma_tmp, Xn_tmp, cat_params.m1_cat)
         Xn_tmp = X_r
 
-        delta_gamma = bit_rearrangement_MIE_nd(cat_params.Y2_FAST_Cat, [X_r[0][0].bin(), X_r[1][0].bin()])
+        delta_gamma = bit_rearrangement_MIE_nd(Y2_FAST_Cat, [X_r[0][0].bin(), X_r[1][0].bin()])
         for i in range(len(gamma_tmp)):
             gamma_tmp_bin = xor(gamma_tmp[i][0].bin(), delta_gamma[i])
             gamma_tmp[i][0] = Fxp('0b' + gamma_tmp_bin, False, cat_params.m2_cat, cat_params.m2_cat - 6)
 
-        delta_X = bit_rearrangement_MIE_nd(cat_params.Y4_FAST_Cat, [X_r[0][0].bin(), X_r[1][0].bin()])
+        delta_X = bit_rearrangement_MIE_nd(Y4_FAST_Cat, [X_r[0][0].bin(), X_r[1][0].bin()])
         for i in range(len(Xn_tmp)):
             Xn_tmp_bin = xor(Xn_tmp[i][0].bin(), delta_X[i])
             Xn_tmp[i][0] = Fxp('0b' + Xn_tmp_bin, False, cat_params.m1_cat, cat_params.m1_cat - 1)
@@ -227,17 +231,17 @@ def MIE_FAST_XYnew_pseudoVal(Xn, XY, Yp_MN, Y_inter_images_p, Yd_C, Yd_Cx):
         image_k.set_val('0b' + ''.join(K_choose[k][:]))
         # image_k = image_k + 1 # if image_k = k -> Permutation in internal of image
 
-        XY_new_in_front_of_XY_1_pixel  = (((X_new == XY[0]) & (Y_new == XY[1] - 1)) | ((X_new == XY[0] - 1) & (Y_new == global_params.N - 1) & (XY[1] == 1)))
-        XY_new_after_XY_1_pixel        = (((XY_new == XY[0]) & (Y_new == XY[1] + 1)) | ((X_new == XY[0] + 1) & (Y_new == 1) & (XY[1] == global_params.N - 1)))
-        XY_new_is_XY                   = ((X_new == XY[0]) & (Y_new == XY[1]))
-        XY_new_in_front_of_XY_2_pixels = ((X_new == XY[0]) & (Y_new == XY[1] - 2)) | ((X_new == XY[0] - 1) & (Y_new == global_params.N - 1) & (XY[1] == 2)) | ((X_new == XY[0]) & (Y_new == global_params.N - 2) & (XY[1] == 1))
-        XY_new_after_XY_2_pixels       = ((X_new == XY[0]) & (Y_new == XY[1] + 2)) | ((X_new == XY[0] + 1) & (Y_new == 1) & (XY[1] == global_params.N - 2)) | ((X_new == XY[0] + 1) & (Y_new == 2) & (XY[1] == global_params.N - 1))
+        XY_new_in_front_of_XY_1_pixel  = (((X_new  == XY[0]) & (Y_new == XY[1] - 1))  | ((X_new == XY[0] - 1) & (Y_new == global_params.N - 1) & (XY[1] == 1)))
+        XY_new_after_XY_1_pixel        = (((XY_new == XY[0]) & (Y_new == XY[1] + 1))  | ((X_new == XY[0] + 1) & (Y_new == 1) & (XY[1] == global_params.N - 1)))
+        XY_new_is_XY                   = ((X_new   == XY[0]) & (Y_new == XY[1]     ))
+        XY_new_in_front_of_XY_2_pixels = ((X_new   == XY[0]) & (Y_new == XY[1] - 2 )) | ((X_new == XY[0] - 1) & (Y_new == global_params.N - 1) & (XY[1] == 2)) | ((X_new == XY[0]) & (Y_new == global_params.N - 2) & (XY[1] == 1))
+        XY_new_after_XY_2_pixels       = ((X_new   == XY[0]) & (Y_new == XY[1] + 2 )) | ((X_new == XY[0] + 1) & (Y_new == 1) & (XY[1] == global_params.N - 2)) | ((X_new == XY[0] + 1) & (Y_new == 2) & (XY[1] == global_params.N - 1))
         
         if ((image_k == k) & (XY_new_in_front_of_XY_1_pixel | XY_new_after_XY_1_pixel | XY_new_is_XY | XY_new_in_front_of_XY_2_pixels | XY_new_after_XY_2_pixels)):
             if (X_new < global_params.M - 1):
-                X_New = X_New + 1
+                X_new = X_new + 1
             else:
-                X_New = X_New - 1
+                X_new = X_new - 1
 
         XY_new.append([np.uint16(X_new), np.uint16(Y_new), np.uint8(image_k)])
 
@@ -321,9 +325,10 @@ def MIE_FAST_Perm_and_Diff_pixels_DEC(kC, XY, XY_new, pseudoVal_string_C, pseudo
 
     for k in range(global_params.K):
         # Permutation
-        temp = kC[k][i][j]
-        kC[k][i][j] = kC[XY_new[k][2]][XY_new[k][0]][XY_new[k][1]]
-        kC[XY_new[k][2]][XY_new[k][0]][XY_new[k][1]] = temp
+        # First, decrypt for the lastest pixel
+        temp = kC[XY_new[2]][XY_new[0]][XY_new[1]]
+        temp_str = xor(np.binary_repr(temp, width = global_params.k2), pseudoVal_string_Cx[k]) # temp_value = I[i][j] XOR C[i-1][j]
+        kC[XY_new[k][2]][XY_new[k][0]][XY_new[k][1]] = np.uint8(int(temp_str, 2))
 
         # Diffusion
         temp = kC[k][i][j] # Current pixel after Permutation

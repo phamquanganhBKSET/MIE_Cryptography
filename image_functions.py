@@ -40,5 +40,7 @@ def show_images(kI, str_Fnames, size = (10, 10), rows = 3, cols = 3):
     plt.show()
 
 # Function: Save image into directory
-def save_images(folder_path):
-    pass
+def save_images(kC, folder_path, str_Fnames):
+    for i in range(len(str_Fnames)):
+        cv2.imwrite(folder_path + str_Fnames[i], kC[i])
+    
