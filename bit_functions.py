@@ -286,33 +286,80 @@ def MIE_FAST_Perm_and_Diff_pixels_ENC(kI, XY, XY_new, pseudoVal_string_C, pseudo
     if (i < global_params.M - 1):
         if (j <= global_params.N - 3):
             for k in range(global_params.K):
-                kP_plus[k][0] = kI[k][i][j+2]
+                kP_plus[k][0] = np.uint8(kI[k][i][j+2])
         else:
             for k in range(global_params.K):
-                kP_plus[k][0] = kI[k][i+1][j-(global_params.N-2)]
+                kP_plus[k][0] = np.uint8(kI[k][i+1][j-(global_params.N-2)])
     else:
         if (j <= global_params.N - 3):
             for k in range(global_params.K):
-                kP_plus[k][0] = kI[k][i][j+2]
+                kP_plus[k][0] = np.uint8(kI[k][i][j+2])
         elif(j == global_params.N - 2):
             if (n == global_params.Ne - 1):
                 for k in range(global_params.K):
-                    kP_plus[k][0] = global_params.kP0[k][0]
+                    kP_plus[k][0] = np.uint8(global_params.kP0[k][0])
             else:
-                kP_plus[k][0] = kI[k][0][0]
+                kP_plus[k][0] = np.uint8(kI[k][0][0])
 
     return kC_ij, kP_plus, kI
 
 
 # Function: MIE Permutation and Diffusion of Decryption processing
-# kI: Images (list of image matrices)
+# kC: Cipher images (list of image matrices)
 # XY: Current i and j (list [i, j])
 # XY_new: New position [(i', j'), (i'', j''),...]
 # pseudoVal_string_C: After permutation, source plain pixel is XORed with pseudoVal_string_C
 # pseudoVal_string_Cx: After permutation, destination plain pixel is XORed with pseudoVal_string_Cx
 # kC_minus: kC-
-# Return: 1. kC_ij: Pixel's value used to impact chaotic map (the same type as kC_minus)
-#         2. kP_plus: kP+
-#         3. kI: Images after Permutation and Diffusion (list of image matrices)
-def MIE_FAST_Perm_and_Diff_pixels_DEC(kI, XY, XYnew, pseudoVal_string_C, pseudoVal_string_Cx, kC_minus):
-    pass
+# n: Current iteration's order
+# Return: 1. kC_m: kC- for the next pixel
+#         2. kC_ij: Pixel's value used to impact chaotic map (the same type as kC_minus)
+#         3. kC: 
+def MIE_FAST_Perm_and_Diff_pixels_DEC(kC, XY, XY_new, pseudoVal_string_C, pseudoVal_string_Cx, kC_minus, n):
+    i = XY[0]
+    j = XY[1]
+
+    for k in range(global_params.K):
+        # Permutation
+        temp = kC[k][i][j]
+        kC[k][i][j] = kC[XY_new[k][2]][XY_new[k][0]][XY_new[k][1]]
+        kC[XY_new[k][2]][XY_new[k][0]][XY_new[k][1]] = temp
+
+        # Diffusion
+        temp = kC[k][i][j] # Current pixel after Permutation
+        temp_str = xor(np.binary_repr(temp, width = global_params.k2), np.binary_repr(kC_minus[k][0], width = global_params.k2)) # temp_value = I[i][j] XOR C[i-1][j]
+        temp_str = xor(temp_str, pseudoVal_string_C[k]) # temp_value XOR pseudoVal_string_C (result of chaotic map)
+        kC[k][i][j] = np.uint8(int(temp_str, 2))
+
+        # The pixel permuted with current pixel is also diffused
+        temp = kC[k][i][j]
+        kC[k][i][j] = kC[XY_new[2]][XY_new[0]][XY_new[1]]
+        kC[XY_new[2]][XY_new[0]][XY_new[1]] = temp
+
+    # For the next pixel: Pass the diffused pixel's value to chaotic map
+    kP_ij = np.zeros_like(global_params.kC0)
+    for k in range(global_params.K):
+        kP_ij[k][0] = kC[k][i][j]
+
+    # Find kC_minus for the next pixel
+    kC_m = np.zeros((global_params.K, 1))
+    if (i > 0):
+        if (j > 1):
+            for k in range(global_params.K):
+                kC_m[k][0] = np.uint8(kC[k][i][j-2])
+        else:
+            for k in range(global_params.K):
+                kC_m[k][0] = np.uint8(kC[k][i-1][global_params.N-(2-j)-1])
+    else:
+        if (j > 1):
+            for k in range(global_params.K):
+                kC_m[k][0] = np.uint8(kC[k][i][j-2])
+        elif(j == 1):
+            if (n > 0):
+                for k in range(global_params.K):
+                    kC_m[k][0] = np.uint8(kC[k][global_params.M-1][global_params.N-1])
+            else:
+                for k in range(global_params.K):
+                    kC_m[k][0] = np.uint8(global_params.kC0[k][0])
+
+    return kC_m, kP_ij, kC
