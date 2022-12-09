@@ -24,23 +24,24 @@ def read_images(path, size = (256, 256), OS = 'Windows'):
 
 # Function: Show images as grayscale images
 # kI: List of image matrices
+# suptitle: Super title
 # str_Fnames: List of image names
 # size: Size of a image window
 # rows: Number of rows presented
 # cols: Number of columns presented
-def show_images(kI, str_Fnames, size = (10, 10), rows = 3, cols = 3):
+def show_images(kI, suptitle, str_Fnames, size = (10, 10), rows = 3, cols = 3):
     fig = plt.figure(figsize = size)
 
     for i in range(len(kI)):
         fig.add_subplot(rows, cols, i + 1)
         plt.imshow(kI[i], cmap='gray', vmin=0, vmax=255)
         plt.title(str_Fnames[i])
-    fig.suptitle('Plain images', size = 16)
+    fig.suptitle(suptitle, size = 16)
     fig.tight_layout(pad=1.0)
     plt.show()
 
 # Function: Save image into directory
 def save_images(kC, folder_path, str_Fnames):
     for i in range(len(str_Fnames)):
-        cv2.imwrite(folder_path + str_Fnames[i], kC[i])
+        cv2.imwrite(os.path.join(folder_path, str_Fnames[i]), kC[i])
     

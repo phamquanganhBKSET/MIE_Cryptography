@@ -26,7 +26,7 @@ Gamma0_Cat = np.array([
 
 # Yp_256x256_Cats: Used to rearrange bit of X_R to find X_new and Y_new
 Yp_256x256_Cat = [
-                  np.array([[2 , 2 , 2, 1 , 1 , 2, 1 , 2 , 2 , 2 , 2 , 1 , 2 , 1 , 1 , 1 ],   # -> Size of one row equals to 2*log2(M)
+                  np.array([[2 , 2 , 2, 1 , 1 , 2, 1 , 2 , 2 , 2 , 2 , 1 , 2 , 1 , 1 , 1 ],   # -> Size of one row equals to log2(M) + log2(N)
                             [19, 30, 3, 22, 14, 6, 11, 22, 31, 16, 20, 30, 22, 19, 18, 21]]), # k = 1
                   
                   np.array([[2, 1 , 2 , 1 , 1, 2 , 1 , 1 , 1, 2 , 1, 1 , 2 , 2 , 1 , 1],
@@ -168,7 +168,7 @@ Yd_Cx_Cat = [
 
 # Yp_8x8_Cats: Used to rearrange bit of X_R to find X_new and Y_new
 Yp_8x8_Cat = [
-                  np.array([[2 , 2 , 2, 1 , 1 , 2],   # -> Size of one row equals to 2*log2(M)
+                  np.array([[2 , 2 , 2, 1 , 1 , 2],   # -> Size of one row equals to log2(M) + log2(N)
                             [19, 30, 3, 22, 14, 6]]), # k = 1
                   
                   np.array([[2, 1 , 2 , 1 , 1, 2 ],
