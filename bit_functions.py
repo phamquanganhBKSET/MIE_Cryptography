@@ -9,6 +9,10 @@ from fxpmath import Fxp
 # a, b: Operators (string)
 # Return: a XOR b (string)
 def xor(a, b):
+    if (len(a) != len(b)):
+        print("BIT XOR ERROR")
+        return None
+    
     ans = ""
      
     # Loop to iterate over the
@@ -24,38 +28,59 @@ def xor(a, b):
 
 
 # Function: MIE Bit Manipulation
-# kC: Cipher text
-# kP: Plain text
+# kC: Cipher text (Type: the same as kC0)
+# kP: Plain text (Type: the same as kP0)
 # output_size: Size of output list
 # Return: Bit string after Bit Manipulation
 def MIE_Bit_Manipulation(kC, kP, output_size):
     E1 = ''
     E2 = ''
-    kP_fxp = Fxp(0, False, global_params.k2, 0)   # (val, signed, n_word, n_frac)
-    kC_fxp = Fxp(0, False, global_params.k2, 0)   # (val, signed, n_word, n_frac)
+    # kP_fxp = Fxp(0, False, global_params.k2, 0)   # (val, signed, n_word, n_frac)
+    # kC_fxp = Fxp(0, False, global_params.k2, 0)   # (val, signed, n_word, n_frac)
 
     for k in range(global_params.K):
-        kP_fxp.set_val(kP[k][0])
-        kC_fxp.set_val(kC[k][0])
-        E1 = E1 + kC_fxp.bin()
-        E2 = E2 + kP_fxp.bin()
+        # kP_fxp.set_val(kP[k][0])
+        # kC_fxp.set_val(kC[k][0])
+        E1 = E1 + np.binary_repr(kC[k][0], width = global_params.k2)
+        E2 = E2 + np.binary_repr(kP[k][0], width = global_params.k2)
     
     T = ''
     for i in range(len(E2)):
-        T = T + E1[i] + E2[i]
+        T = T + E2[i] + E1[i]
 
     times = math.ceil(len(T) * 1.0 / output_size)
-    if times < 1: # |E1| + |E2| < |E|
-        m = math.ceil(output_size * 1.0 / len(T)) # (m-1) * |T| < |E| < m * |T|
-        T = T * int(m)
-    
-    # Number of bit 0 needed to padd to Tn = |E| - |Tn|
-    zero_length_pad = output_size * math.ceil(len(T) * 1.0 / output_size) - len(T) * 1.0
-    str_zeros = '0' * int(zero_length_pad)
-    T = T + str_zeros
-    E = T[0:output_size]
-    for i in range(1, times):
-        E = xor(E, T[i*output_size:(i+1)*output_size])
+    E = ''
+    if times <= 1.0: # |E1| + |E2| < |E|
+        m = math.ceil(output_size * 1.0 / len(T)) # (m-1) * |T'| < |E| < m * |T'|
+        T = T * int(m) # T = T' * m
+
+        # Split E into n bit sequences
+        n = math.ceil(len(T) * 1.0 / output_size) # (n-1) * |E| < |T| < n * |E|
+
+        # Number of bit 0 needed to padd to Tn = |E| - |Tn|
+        if ((len(T) % output_size) != 0):
+            zero_length_pad = output_size * math.ceil(len(T) * 1.0 / output_size) - len(T) * 1.0
+            str_zeros = '0' * int(zero_length_pad)
+            T = T + str_zeros
+
+        E = T[0:output_size]
+        for i in range(1, n):
+            E = xor(E, T[i*output_size:(i+1)*output_size])
+        
+    else: # |E1| + |E2| > |E|
+        # Split E into n bit sequences
+        n = math.ceil(len(T) * 1.0 / output_size) # (n-1) * |E| < |T| < n * |E|
+
+        # Number of bit 0 needed to padd to Tn = |E| - |Tn|
+        if ((len(T) % output_size) != 0):
+            zero_length_pad = output_size * math.ceil(len(T) * 1.0 / output_size) - len(T) * 1.0
+            str_zeros = '0' * int(zero_length_pad)
+            T = T + str_zeros
+
+        E = T[0:output_size]
+        for i in range(1, n):
+            E = xor(E, T[i*output_size:(i+1)*output_size])
+        
     return E
 
 
@@ -66,8 +91,8 @@ def MIE_Bit_Manipulation(kC, kP, output_size):
 def bit_rearrangement_1d_to_nd(Y: list, B) -> list:
     # Flip left/right verison of B
     B_fliplr = B.copy()
-    for i in range(len(B_fliplr)):
-        B_fliplr[i] = B[i][::-1] # [start:stop:step]
+    # for i in range(len(B_fliplr)):
+    #     B_fliplr[i] = B[i][::-1] # [start:stop:step]
 
     matrix_B = [['']]*len(B_fliplr)
     for i in range(len(matrix_B)):
@@ -117,6 +142,8 @@ def bit_rearrangement_MIE_nd(Y: list, B) -> list:
         for k in range(depth_Y):
             if ((Y[k][0][j] == 0) & (Y[k][1][j] == 0)):
                 A1[k][j] = '0'
+            elif ((Y[k][0][j] == 100) & (Y[k][1][j] == 100)):
+                A1[k][j] = '1'
             else:
                 A1[k][j] = matrix_B[Y[k][0][j]-1][Y[k][1][j]-1]
 
@@ -135,8 +162,8 @@ def bit_rearrangement_MIE_nd(Y: list, B) -> list:
 # Return: Numpy array with dtype = Fxp
 def Cat_fi(pq, xy: np.ndarray, N):
     xy_out = np.copy(xy)
-    xy_out[0][0] = Fxp(xy[0][0] + pq[0][0]*xy[1][0] - math.floor(xy[0][0] + pq[0][0]*xy[1][0]),False, N, N-1)
-    xy_out[1][0] = Fxp(pq[1][0]*xy[0][0]+(pq[0][0]*pq[1][0]+1)*xy[1][0] - math.floor(pq[1][0]*xy[0][0]+(pq[0][0]*pq[1][0]+1)*xy[1][0]),False, N, N-1)
+    xy_out[0][0] = Fxp(xy[0][0] + pq[0][0]*xy[1][0] - math.floor(xy[0][0] + pq[0][0]*xy[1][0]), False, N, N-1)
+    xy_out[1][0] = Fxp(pq[1][0]*xy[0][0] + (pq[0][0]*pq[1][0] + 1)*xy[1][0] - math.floor(pq[1][0]*xy[0][0]+(pq[0][0]*pq[1][0] + 1)*xy[1][0]), False, N, N-1)
     return xy_out
 
 
@@ -231,11 +258,11 @@ def MIE_FAST_XYnew_pseudoVal(Xn, XY, Yp_MN, Y_inter_images_p, Yd_C, Yd_Cx):
         image_k.set_val('0b' + ''.join(K_choose[k][:]))
         # image_k = image_k + 1 # if image_k = k -> Permutation in internal of image
 
-        XY_new_in_front_of_XY_1_pixel  = (((X_new  == XY[0]) & (Y_new == XY[1] - 1))  | ((X_new == XY[0] - 1) & (Y_new == global_params.N - 1) & (XY[1] == 1)))
-        XY_new_after_XY_1_pixel        = (((XY_new == XY[0]) & (Y_new == XY[1] + 1))  | ((X_new == XY[0] + 1) & (Y_new == 1) & (XY[1] == global_params.N - 1)))
+        XY_new_in_front_of_XY_1_pixel  = (((X_new  == XY[0]) & (Y_new == XY[1] - 1))  | ((X_new == XY[0] - 1) & (Y_new == global_params.N - 1) & (XY[1] == 0)))
+        XY_new_after_XY_1_pixel        = (((XY_new == XY[0]) & (Y_new == XY[1] + 1))  | ((X_new == XY[0] + 1) & (Y_new == 0) & (XY[1] == global_params.N - 1)))
         XY_new_is_XY                   = ((X_new   == XY[0]) & (Y_new == XY[1]     ))
-        XY_new_in_front_of_XY_2_pixels = ((X_new   == XY[0]) & (Y_new == XY[1] - 2 )) | ((X_new == XY[0] - 1) & (Y_new == global_params.N - 1) & (XY[1] == 2)) | ((X_new == XY[0]) & (Y_new == global_params.N - 2) & (XY[1] == 1))
-        XY_new_after_XY_2_pixels       = ((X_new   == XY[0]) & (Y_new == XY[1] + 2 )) | ((X_new == XY[0] + 1) & (Y_new == 1) & (XY[1] == global_params.N - 2)) | ((X_new == XY[0] + 1) & (Y_new == 2) & (XY[1] == global_params.N - 1))
+        XY_new_in_front_of_XY_2_pixels = ((X_new   == XY[0]) & (Y_new == XY[1] - 2 )) | ((X_new == XY[0] - 1) & (Y_new == global_params.N - 1) & (XY[1] == 1)) | ((X_new == XY[0] - 1) & (Y_new == global_params.N - 2) & (XY[1] == 0))
+        XY_new_after_XY_2_pixels       = ((X_new   == XY[0]) & (Y_new == XY[1] + 2 )) | ((X_new == XY[0] + 1) & (Y_new == 0) & (XY[1] == global_params.N - 2)) | ((X_new == XY[0] + 1) & (Y_new == 1) & (XY[1] == global_params.N - 1))
         
         if ((image_k == k) & (XY_new_in_front_of_XY_1_pixel | XY_new_after_XY_1_pixel | XY_new_is_XY | XY_new_in_front_of_XY_2_pixels | XY_new_after_XY_2_pixels)):
             if (X_new < global_params.M - 1):
