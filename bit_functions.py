@@ -225,6 +225,8 @@ def MIE_FAST_XYnew_pseudoVal(Xn, XY, Yp_MN, Y_inter_images_p, Yd_C, Yd_Cx):
     for i in range(height_Xn):
         matrix_Xn[i] = [*Xn[i][0].bin()] # List of bits
 
+    print("\nMIE_FAST_XYnew_pseudoVal.matrix_Xn: \n", matrix_Xn)
+
     # Yp_MN.shape
     width_Yp_MN = Yp_MN[0].shape[1]
 
@@ -234,6 +236,8 @@ def MIE_FAST_XYnew_pseudoVal(Xn, XY, Yp_MN, Y_inter_images_p, Yd_C, Yd_Cx):
         for k in range(global_params.K):
             XY_choose[k][j] = matrix_Xn[Yp_MN[k][0][j]-1][Yp_MN[k][1][j]-1]
 
+    print("\nMIE_FAST_XYnew_pseudoVal.XY_choose: \n", XY_choose)
+
     # Y_inter_images_p.shape
     width_Y_inter_images_p = Y_inter_images_p[0].shape[1]
 
@@ -242,6 +246,8 @@ def MIE_FAST_XYnew_pseudoVal(Xn, XY, Yp_MN, Y_inter_images_p, Yd_C, Yd_Cx):
     for j in range(width_Y_inter_images_p):
         for k in range(global_params.K):
             K_choose[k][j] = matrix_Xn[Y_inter_images_p[k][0][j]-1][Y_inter_images_p[k][1][j]-1]
+
+    print("\nMIE_FAST_XYnew_pseudoVal.K_choose: \n", K_choose, "\n")
 
     # XYnew
     XY_new  = []
