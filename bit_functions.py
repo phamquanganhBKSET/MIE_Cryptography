@@ -94,24 +94,40 @@ def bit_rearrangement_1d_to_nd(Y: list, B) -> list:
     # for i in range(len(B_fliplr)):
     #     B_fliplr[i] = B[i][::-1] # [start:stop:step]
 
-    matrix_B = [['']]*len(B_fliplr)
-    for i in range(len(matrix_B)):
-        matrix_B[i] = [*B_fliplr[i]] # Unpack string to a list
+    # matrix_B = [['']]*len(B_fliplr)
+    matrix_B = []
+    for i in range(len(B_fliplr)):
+        # matrix_B[i] = [*B_fliplr[i]] # Unpack string to a list
+        matrix_B.append([*B_fliplr[i]]) # Unpack string to a list
 
     # Y.shape
     width_Y = Y[0].shape[1]
     depth_Y = len(Y)
 
-    A1 = [[''] * width_Y] * depth_Y # size = (depth_Y, width_Y): # [['', '',..., ''], ['', '',..., ''],..., ['', '',..., '']]
+    # A1 = [[''] * width_Y] * depth_Y # size = (depth_Y, width_Y): # [['', '',..., ''], ['', '',..., ''],..., ['', '',..., '']]
 
-    for j in range(width_Y):
-        for k in range(depth_Y):
+    # for k in range(depth_Y):
+    #     for j in range(width_Y):
+    #         if ((Y[k][0][j] == 0) & (Y[k][1][j] == 0)):
+    #             A1[k][j] = '0'
+    #         elif ((Y[k][0][j] == 100) & (Y[k][1][j] == 100)):
+    #             A1[k][j] = '1'
+    #         else:
+    #             A1[k][j] = matrix_B[Y[k][0][j]-1][Y[k][1][j]-1]
+
+    A1 = []
+    temp_A1 = []
+
+    for k in range(depth_Y):
+        for j in range(width_Y):
             if ((Y[k][0][j] == 0) & (Y[k][1][j] == 0)):
-                A1[k][j] = '0'
+                temp_A1.append('0')
             elif ((Y[k][0][j] == 100) & (Y[k][1][j] == 100)):
-                A1[k][j] = '1'
+                temp_A1.append('1')
             else:
-                A1[k][j] = matrix_B[Y[k][0][j]-1][Y[k][1][j]-1]
+                temp_A1.append(str(matrix_B[Y[k][0][j]-1][Y[k][1][j]-1]))
+        A1.append(temp_A1)
+        temp_A1 = []
 
     # Result: New string array (list of string)
     A = []
@@ -128,24 +144,40 @@ def bit_rearrangement_1d_to_nd(Y: list, B) -> list:
 def bit_rearrangement_MIE_nd(Y: list, B) -> list:
     #Size of B
     height_B = len(B)
-    matrix_B = [['']] * height_B # [[''], [''],..., ['']]
+    # matrix_B = [] * height_B # [[''], [''],..., ['']]
+    matrix_B = []
     for i in range(height_B):
-        matrix_B[i] = [*B[i]] # List of bits
+        # matrix_B[i] = [*B[i]] # List of bits
+        matrix_B.append([*B[i]]) # List of bits
     
     # Y.shape
     width_Y = Y[0].shape[1]
     depth_Y = len(Y)
 
-    A1 = [[''] * width_Y] * depth_Y # size = (depth_Y, width_Y): # [['', '',..., ''], ['', '',..., ''],..., ['', '',..., '']]
+    # A1 = [[''] * width_Y] * depth_Y # size = (depth_Y, width_Y): # [['', '',..., ''], ['', '',..., ''],..., ['', '',..., '']]
 
-    for j in range(width_Y):
-        for k in range(depth_Y):
+    # for k in range(depth_Y):
+    #     for j in range(width_Y):
+    #         if ((Y[k][0][j] == 0) & (Y[k][1][j] == 0)):
+    #             A1[k][j] = '0'
+    #         elif ((Y[k][0][j] == 100) & (Y[k][1][j] == 100)):
+    #             A1[k][j] = '1'
+    #         else:
+    #             A1[k][j] = matrix_B[Y[k][0][j]-1][Y[k][1][j]-1]
+
+    A1 = []
+    temp_A1 = []
+
+    for k in range(depth_Y):
+        for j in range(width_Y):
             if ((Y[k][0][j] == 0) & (Y[k][1][j] == 0)):
-                A1[k][j] = '0'
+                temp_A1.append('0')
             elif ((Y[k][0][j] == 100) & (Y[k][1][j] == 100)):
-                A1[k][j] = '1'
+                temp_A1.append('1')
             else:
-                A1[k][j] = matrix_B[Y[k][0][j]-1][Y[k][1][j]-1]
+                temp_A1.append(str(matrix_B[Y[k][0][j]-1][Y[k][1][j]-1]))
+        A1.append(temp_A1)
+        temp_A1 = []
 
     # Result: New string array (list of string)
     A = []
@@ -221,31 +253,43 @@ def MIE_FAST_XYnew_pseudoVal(Xn, XY, Yp_MN, Y_inter_images_p, Yd_C, Yd_Cx):
 
     # Xn.shape
     height_Xn = Xn.shape[0]
-    matrix_Xn = [['']] * height_Xn # [[''], [''],..., ['']]
+    # matrix_Xn = [['']] * height_Xn # [[''], [''],..., ['']]
+    matrix_Xn = []
     for i in range(height_Xn):
-        matrix_Xn[i] = [*Xn[i][0].bin()] # List of bits
+        # matrix_Xn[i] = [*Xn[i][0].bin()] # List of bits
+        matrix_Xn.append([*Xn[i][0].bin()]) # List of bits
 
     print("\nMIE_FAST_XYnew_pseudoVal.matrix_Xn: \n", matrix_Xn)
 
     # Yp_MN.shape
     width_Yp_MN = Yp_MN[0].shape[1]
 
-    XY_choose = [[''] * width_Yp_MN] * global_params.K # size = (global_params.K, width_Yp_MN): # [['', '',..., ''], ['', '',..., ''],..., ['', '',..., '']]
+    # XY_choose = [[''] * width_Yp_MN] * global_params.K # size = (global_params.K, width_Yp_MN): # [['', '',..., ''], ['', '',..., ''],..., ['', '',..., '']]
+    XY_choose = []
+    temp_XY_choose = []
 
-    for j in range(width_Yp_MN):
-        for k in range(global_params.K):
-            XY_choose[k][j] = matrix_Xn[Yp_MN[k][0][j]-1][Yp_MN[k][1][j]-1]
+    for k in range(global_params.K):
+        for j in range(width_Yp_MN):
+            # XY_choose[k][j] = str(matrix_Xn[Yp_MN[k][0][j]-1][Yp_MN[k][1][j]-1])
+            temp_XY_choose.append(str(matrix_Xn[Yp_MN[k][0][j]-1][Yp_MN[k][1][j]-1]))
+        XY_choose.append(temp_XY_choose)
+        temp_XY_choose = []
 
     print("\nMIE_FAST_XYnew_pseudoVal.XY_choose: \n", XY_choose)
 
     # Y_inter_images_p.shape
     width_Y_inter_images_p = Y_inter_images_p[0].shape[1]
 
-    K_choose = [[''] * width_Y_inter_images_p] * global_params.K # size = (global_params.K, width_Y_inter_images_p): # [['', '',..., ''], ['', '',..., ''],..., ['', '',..., '']]
+    # K_choose = [[''] * width_Y_inter_images_p] * global_params.K # size = (global_params.K, width_Y_inter_images_p): # [['', '',..., ''], ['', '',..., ''],..., ['', '',..., '']]
+    K_choose = []
+    temp_K_choose = []
 
-    for j in range(width_Y_inter_images_p):
-        for k in range(global_params.K):
-            K_choose[k][j] = matrix_Xn[Y_inter_images_p[k][0][j]-1][Y_inter_images_p[k][1][j]-1]
+    for k in range(global_params.K):
+        for j in range(width_Y_inter_images_p):
+            # K_choose[k][j] = str(matrix_Xn[Y_inter_images_p[k][0][j]-1][Y_inter_images_p[k][1][j]-1])
+            temp_K_choose.append(str(matrix_Xn[Y_inter_images_p[k][0][j]-1][Y_inter_images_p[k][1][j]-1]))
+        K_choose.append(temp_K_choose)
+        temp_K_choose = []
 
     print("\nMIE_FAST_XYnew_pseudoVal.K_choose: \n", K_choose, "\n")
 
@@ -320,19 +364,19 @@ def MIE_FAST_Perm_and_Diff_pixels_ENC(kI, XY, XY_new, pseudoVal_string_C, pseudo
 
     # Find kP_plus for the next pixel
     kP_plus = np.zeros((global_params.K, 1), dtype=np.uint8)
-    if (i < global_params.M - 1):
-        if (j <= global_params.N - 3):
+    if (i < global_params.M - 1): # This means i + 1 is not out of range (i + 1 <= M - 1)
+        if (j < global_params.N - 2): # This means k[i][j+2] is inside image because j + 2 is not out of range (j + 2 <= N - 1)
             for k in range(global_params.K):
                 kP_plus[k][0] = np.uint8(kI[k][i][j+2])
-        else:
+        else: # This means j + 2 is out of range (j + 2 > N - 1)
             for k in range(global_params.K):
-                kP_plus[k][0] = np.uint8(kI[k][i+1][j-(global_params.N-2)])
-    else:
-        if (j <= global_params.N - 3):
+                kP_plus[k][0] = np.uint8(kI[k][i+1][j-(global_params.N-1)+1]) # Go to the (j-(global_params.N-1)+1)th pixel of the next rows
+    else: # This means i + 1 is out of range (i + 1 > M - 1)
+        if (j < global_params.N - 2): # This means j + 2 is not out of range (j + 2 <= N - 1)
             for k in range(global_params.K):
                 kP_plus[k][0] = np.uint8(kI[k][i][j+2])
-        elif(j == global_params.N - 2):
-            if (n == global_params.Ne - 1):
+        elif(j == global_params.N - 2): # This mean j + 2 == N
+            if (n == global_params.Ne - 1): # The last iteration
                 for k in range(global_params.K):
                     kP_plus[k][0] = np.uint8(global_params.kP0[k][0])
             else:
@@ -375,28 +419,28 @@ def MIE_FAST_Perm_and_Diff_pixels_DEC(kC, XY, XY_new, pseudoVal_string_C, pseudo
         kC[XY_new[k][2]][XY_new[k][0]][XY_new[k][1]] = temp
 
     # For the next pixel: Pass the diffused pixel's value to chaotic map
-    kP_ij = np.zeros_like(global_params.kC0)
+    kP_ij = np.zeros_like(global_params.kC0, dtype=np.uint8)
     for k in range(global_params.K):
         kP_ij[k][0] = kC[k][i][j]
 
     # Find kC_minus for the next pixel
     kC_m = np.zeros((global_params.K, 1), dtype=np.uint8)
-    if (i > 0):
-        if (j > 1):
+    if (i > 0): # This means i - 1 is not out of range (i - 1 >= 0)
+        if (j > 1): # This means k[i][j-2] is inside image because j - 2 is not out of range (j - 2 > 0)
             for k in range(global_params.K):
                 kC_m[k][0] = np.uint8(kC[k][i][j-2])
-        else:
+        else: # This means j - 2 is out of range (j - 2 < 0)
             for k in range(global_params.K):
-                kC_m[k][0] = np.uint8(kC[k][i-1][global_params.N-(2-j)-1])
-    else:
-        if (j > 1):
+                kC_m[k][0] = np.uint8(kC[k][i-1][global_params.N-(2-j)]) # Go to the (global_params.N-(2-j))th pixel of the previous rows
+    else: # This means i - 1 is out of range (i - 1 < 0)
+        if (j > 1): # This means j - 2 is not out of range (j - 2 >= 0)
             for k in range(global_params.K):
                 kC_m[k][0] = np.uint8(kC[k][i][j-2])
-        elif(j == 1):
-            if (n > 0):
+        elif(j == 1): # This mean j - 2 == -1
+            if (n == 0):
                 for k in range(global_params.K):
                     kC_m[k][0] = np.uint8(kC[k][global_params.M-1][global_params.N-1])
-            else:
+            else: # The last iteration
                 for k in range(global_params.K):
                     kC_m[k][0] = np.uint8(global_params.kC0[k][0])
 
