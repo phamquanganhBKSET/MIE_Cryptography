@@ -395,7 +395,7 @@ def MIE_FAST_Perm_and_Diff_pixels_ENC(kI, XY, XY_new, pseudoVal_string_C, pseudo
 # n: Current iteration's order
 # Return: 1. kC_m: kC- for the next pixel
 #         2. kC_ij: Pixel's value used to impact chaotic map (the same type as kC_minus)
-#         3. kC: 
+#         3. kC: kC
 def MIE_FAST_Perm_and_Diff_pixels_DEC(kC, XY, XY_new, pseudoVal_string_C, pseudoVal_string_Cx, kC_minus, n):
     i = XY[0]
     j = XY[1]
