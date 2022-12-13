@@ -308,17 +308,21 @@ def MIE_FAST_XYnew_pseudoVal(Xn, XY, Yp_MN, Y_inter_images_p, Yd_C, Yd_Cx):
         image_k.set_val('0b' + ''.join(K_choose[k][:]))
         # image_k = image_k + 1 # if image_k = k -> Permutation in internal of image
 
-        XY_new_in_front_of_XY_1_pixel  = (((X_new  == XY[0]) & (Y_new == XY[1] - 1))  | ((X_new == XY[0] - 1) & (Y_new == global_params.N - 1) & (XY[1] == 0)))
-        XY_new_after_XY_1_pixel        = (((XY_new == XY[0]) & (Y_new == XY[1] + 1))  | ((X_new == XY[0] + 1) & (Y_new == 0) & (XY[1] == global_params.N - 1)))
-        XY_new_is_XY                   = ((X_new   == XY[0]) & (Y_new == XY[1]     ))
-        XY_new_in_front_of_XY_2_pixels = ((X_new   == XY[0]) & (Y_new == XY[1] - 2 )) | ((X_new == XY[0] - 1) & (Y_new == global_params.N - 1) & (XY[1] == 1)) | ((X_new == XY[0] - 1) & (Y_new == global_params.N - 2) & (XY[1] == 0))
-        XY_new_after_XY_2_pixels       = ((X_new   == XY[0]) & (Y_new == XY[1] + 2 )) | ((X_new == XY[0] + 1) & (Y_new == 0) & (XY[1] == global_params.N - 2)) | ((X_new == XY[0] + 1) & (Y_new == 1) & (XY[1] == global_params.N - 1))
+        XY_new_in_front_of_XY_1_pixel  = (((X_new == XY[0]) & (Y_new == XY[1] - 1))  | ((X_new == XY[0] - 1) & (Y_new == global_params.N - 1) & (XY[1] == 0)))
+        XY_new_after_XY_1_pixel        = (((X_new == XY[0]) & (Y_new == XY[1] + 1))  | ((X_new == XY[0] + 1) & (Y_new == 0) & (XY[1] == global_params.N - 1)))
+        XY_new_is_XY                   = ((X_new  == XY[0]) & (Y_new == XY[1]     ))
+        XY_new_in_front_of_XY_2_pixels = ((X_new  == XY[0]) & (Y_new == XY[1] - 2 )) | ((X_new == XY[0] - 1) & (Y_new == global_params.N - 1) & (XY[1] == 1)) | ((X_new == XY[0] - 1) & (Y_new == global_params.N - 2) & (XY[1] == 0))
+        XY_new_after_XY_2_pixels       = ((X_new  == XY[0]) & (Y_new == XY[1] + 2 )) | ((X_new == XY[0] + 1) & (Y_new == 0) & (XY[1] == global_params.N - 2)) | ((X_new == XY[0] + 1) & (Y_new == 1) & (XY[1] == global_params.N - 1))
         
         if ((image_k == k) & (XY_new_in_front_of_XY_1_pixel | XY_new_after_XY_1_pixel | XY_new_is_XY | XY_new_in_front_of_XY_2_pixels | XY_new_after_XY_2_pixels)):
-            if (X_new < global_params.M - 1):
-                X_new = X_new + 1
+            # if (X_new < global_params.M - 1):
+            #     X_new = X_new + 1
+            # else:
+            #     X_new = X_new - 1
+            if (image_k < global_params.K - 1):
+                image_k = image_k + 1
             else:
-                X_new = X_new - 1
+                image_k = image_k - 1
 
         XY_new.append([np.uint16(X_new), np.uint16(Y_new), np.uint8(image_k)])
 
