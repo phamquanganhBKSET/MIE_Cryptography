@@ -275,8 +275,6 @@ def MIE_FAST_XYnew_pseudoVal(Xn, XY, Yp_MN, Y_inter_images_p, Yd_C, Yd_Cx):
         XY_choose.append(temp_XY_choose)
         temp_XY_choose = []
 
-    print("\nMIE_FAST_XYnew_pseudoVal.XY_choose: \n", XY_choose)
-
     # Y_inter_images_p.shape
     width_Y_inter_images_p = Y_inter_images_p[0].shape[1]
 
@@ -290,8 +288,6 @@ def MIE_FAST_XYnew_pseudoVal(Xn, XY, Yp_MN, Y_inter_images_p, Yd_C, Yd_Cx):
             temp_K_choose.append(str(matrix_Xn[Y_inter_images_p[k][0][j]-1][Y_inter_images_p[k][1][j]-1]))
         K_choose.append(temp_K_choose)
         temp_K_choose = []
-
-    print("\nMIE_FAST_XYnew_pseudoVal.K_choose: \n", K_choose, "\n")
 
     # XYnew
     XY_new  = []
@@ -349,17 +345,18 @@ def MIE_FAST_Perm_and_Diff_pixels_ENC(kI, XY, XY_new, pseudoVal_string_C, pseudo
         temp = kI[k][i][j]
         kI[k][i][j] = kI[XY_new[k][2]][XY_new[k][0]][XY_new[k][1]]
         kI[XY_new[k][2]][XY_new[k][0]][XY_new[k][1]] = temp
-
+        
         # Diffusion
         temp = kI[k][i][j] # Current pixel after Permutation
         temp_str = xor(np.binary_repr(temp, width = global_params.k2), np.binary_repr(kC_minus[k][0], width = global_params.k2)) # temp_value = I[i][j] XOR C[i-1][j]
         temp_str = xor(temp_str, pseudoVal_string_C[k]) # temp_value XOR pseudoVal_string_C (result of chaotic map)
         kI[k][i][j] = np.uint8(int(temp_str, 2))
-
+        
         # The pixel permuted with current pixel is also diffused
         temp = kI[XY_new[k][2]][XY_new[k][0]][XY_new[k][1]]
         temp = xor(np.binary_repr(temp, width = global_params.k2), pseudoVal_string_Cx[k])
         kI[XY_new[k][2]][XY_new[k][0]][XY_new[k][1]] = np.uint8(int(temp, 2))
+        
 
     # For the next pixel: Pass the diffused pixel's value to chaotic map
     kC_ij = np.zeros_like(global_params.kC0, dtype=np.uint8)
@@ -384,7 +381,12 @@ def MIE_FAST_Perm_and_Diff_pixels_ENC(kI, XY, XY_new, pseudoVal_string_C, pseudo
                 for k in range(global_params.K):
                     kP_plus[k][0] = np.uint8(global_params.kP0[k][0])
             else:
-                kP_plus[k][0] = np.uint8(kI[k][0][0])
+                for k in range(global_params.K):
+                    kP_plus[k][0] = np.uint8(kI[k][0][0])
+        else: # This means j == N - 1
+            if (n < global_params.Ne - 1):
+                for k in range(global_params.K):
+                    kP_plus[k][0] = np.uint8(kI[k][0][1])
 
     return kC_ij, kP_plus, kI
 
@@ -404,19 +406,19 @@ def MIE_FAST_Perm_and_Diff_pixels_DEC(kC, XY, XY_new, pseudoVal_string_C, pseudo
     i = XY[0]
     j = XY[1]
 
-    for k in range(global_params.K):
+    for k in range(global_params.K - 1, -1, -1):
         # Permutation
         # First, decrypt for the lastest pixel
         temp = kC[XY_new[k][2]][XY_new[k][0]][XY_new[k][1]]
         temp_str = xor(np.binary_repr(temp, width = global_params.k2), pseudoVal_string_Cx[k]) # temp_value = I[i][j] XOR C[i-1][j]
         kC[XY_new[k][2]][XY_new[k][0]][XY_new[k][1]] = np.uint8(int(temp_str, 2))
-
+        
         # Diffusion
         temp = kC[k][i][j] # Current pixel after Permutations
         temp_str = xor(np.binary_repr(temp, width = global_params.k2), np.binary_repr(kC_minus[k][0], width = global_params.k2)) # temp_value = I[i][j] XOR C[i-1][j]
         temp_str = xor(temp_str, pseudoVal_string_C[k]) # temp_value XOR pseudoVal_string_C (result of chaotic map)
         kC[k][i][j] = np.uint8(int(temp_str, 2))
-
+        
         # The pixel permuted with current pixel is also diffused
         temp = kC[k][i][j]
         kC[k][i][j] = kC[XY_new[k][2]][XY_new[k][0]][XY_new[k][1]]
@@ -440,12 +442,16 @@ def MIE_FAST_Perm_and_Diff_pixels_DEC(kC, XY, XY_new, pseudoVal_string_C, pseudo
         if (j > 1): # This means j - 2 is not out of range (j - 2 >= 0)
             for k in range(global_params.K):
                 kC_m[k][0] = np.uint8(kC[k][i][j-2])
-        elif(j == 1): # This mean j - 2 == -1
-            if (n == 0):
+        elif(j == 1): # This mean j - 2 == -1 and the next pixels is the first pixels of all the images
+            if (n > 0):
                 for k in range(global_params.K):
                     kC_m[k][0] = np.uint8(kC[k][global_params.M-1][global_params.N-1])
             else: # The last iteration
                 for k in range(global_params.K):
                     kC_m[k][0] = np.uint8(global_params.kC0[k][0])
+        else: # This means j == 0
+            if (n > 0):
+                for k in range(global_params.K):
+                    kC_m[k][0] = np.uint8(kC[k][global_params.M-1][global_params.N-2])
 
     return kC_m, kP_ij, kC
