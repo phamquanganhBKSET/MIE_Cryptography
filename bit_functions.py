@@ -259,8 +259,6 @@ def MIE_FAST_XYnew_pseudoVal(Xn, XY, Yp_MN, Y_inter_images_p, Yd_C, Yd_Cx):
         # matrix_Xn[i] = [*Xn[i][0].bin()] # List of bits
         matrix_Xn.append([*Xn[i][0].bin()]) # List of bits
 
-    print("\nMIE_FAST_XYnew_pseudoVal.matrix_Xn: \n", matrix_Xn)
-
     # Yp_MN.shape
     width_Yp_MN = Yp_MN[0].shape[1]
 
@@ -291,24 +289,33 @@ def MIE_FAST_XYnew_pseudoVal(Xn, XY, Yp_MN, Y_inter_images_p, Yd_C, Yd_Cx):
 
     # XYnew
     XY_new  = []
-    X_new   = Fxp(0, False, int(math.log2(global_params.M)), 0)
-    Y_new   = Fxp(0, False, int(math.log2(global_params.N)), 0)
-    image_k = Fxp(0, False, int(math.log2(global_params.K)), 0)
+    X_new   = Fxp(0, False, math.ceil(math.log2(global_params.M)), 0)
+    Y_new   = Fxp(0, False, math.ceil(math.log2(global_params.N)), 0)
+    image_k = Fxp(0, False, math.ceil(math.log2(global_params.K)), 0)
 
     for k in range(global_params.K):
         X_new.set_val('0b' + ''.join(XY_choose[k][0:int(math.log2(global_params.M))]))
+        X_new.set_val(X_new.get_val() % global_params.M)
         # X_new = X_new + 1
         Y_new.set_val('0b' + ''.join(XY_choose[k][int(math.log2(global_params.M)):]))
+        Y_new.set_val(Y_new.get_val() % global_params.N)
         # Y_new = X_new + 1
 
         image_k.set_val('0b' + ''.join(K_choose[k][:]))
+        image_k.set_val(image_k.get_val() % global_params.K)
         # image_k = image_k + 1 # if image_k = k -> Permutation in internal of image
 
-        XY_new_in_front_of_XY_1_pixel  = (((X_new == XY[0]) & (Y_new == XY[1] - 1))  | ((X_new == XY[0] - 1) & (Y_new == global_params.N - 1) & (XY[1] == 0)))
-        XY_new_after_XY_1_pixel        = (((X_new == XY[0]) & (Y_new == XY[1] + 1))  | ((X_new == XY[0] + 1) & (Y_new == 0) & (XY[1] == global_params.N - 1)))
+        XY_new_in_front_of_XY_1_pixel  = (((X_new == XY[0]) & (Y_new == XY[1] - 1))  | ((X_new == XY[0] - 1) & (Y_new == global_params.N - 1) & (XY[1] == 0)) | 
+                                          ((X_new == global_params.M - 1) & (Y_new == global_params.N - 1) & (XY[0] == 0) & (XY[1] == 0)))
+        XY_new_after_XY_1_pixel        = (((X_new == XY[0]) & (Y_new == XY[1] + 1))  | ((X_new == XY[0] + 1) & (Y_new == 0) & (XY[1] == global_params.N - 1)) | 
+                                          ((X_new == 0) & (Y_new == 0) & (XY[0] == global_params.M - 1) & (XY[1] == global_params.N - 1)))
         XY_new_is_XY                   = ((X_new  == XY[0]) & (Y_new == XY[1]     ))
-        XY_new_in_front_of_XY_2_pixels = ((X_new  == XY[0]) & (Y_new == XY[1] - 2 )) | ((X_new == XY[0] - 1) & (Y_new == global_params.N - 1) & (XY[1] == 1)) | ((X_new == XY[0] - 1) & (Y_new == global_params.N - 2) & (XY[1] == 0))
-        XY_new_after_XY_2_pixels       = ((X_new  == XY[0]) & (Y_new == XY[1] + 2 )) | ((X_new == XY[0] + 1) & (Y_new == 0) & (XY[1] == global_params.N - 2)) | ((X_new == XY[0] + 1) & (Y_new == 1) & (XY[1] == global_params.N - 1))
+        XY_new_in_front_of_XY_2_pixels = (((X_new  == XY[0]) & (Y_new == XY[1] - 2 )) | ((X_new == XY[0] - 1) & (Y_new == global_params.N - 1) & (XY[1] == 1)) | 
+                                          ((X_new == XY[0] - 1) & (Y_new == global_params.N - 2) & (XY[1] == 0)) | ((X_new == global_params.M - 1) & (Y_new == global_params.N - 2) & (XY[0] == 0) & (XY[1] == 0)) | 
+                                          ((X_new == global_params.M - 1) & (Y_new == global_params.N - 1) & (XY[0] == 0) & (XY[1] == 1)))
+        XY_new_after_XY_2_pixels       = (((X_new  == XY[0]) & (Y_new == XY[1] + 2 )) | ((X_new == XY[0] + 1) & (Y_new == 0) & (XY[1] == global_params.N - 2)) | 
+                                          ((X_new == XY[0] + 1) & (Y_new == 1) & (XY[1] == global_params.N - 1)) | ((X_new == 0) & (Y_new == 0) & (XY[0] == global_params.M - 1) & (XY[1] == global_params.N - 2)) | 
+                                          ((X_new == 0) & (Y_new == 1) & (XY[0] == global_params.M - 1) & (XY[1] == global_params.N - 1)))
         
         if ((XY_new_in_front_of_XY_1_pixel | XY_new_after_XY_1_pixel | XY_new_is_XY | XY_new_in_front_of_XY_2_pixels | XY_new_after_XY_2_pixels)):
             if (X_new < global_params.M - 1):

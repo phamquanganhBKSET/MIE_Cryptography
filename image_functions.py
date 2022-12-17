@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 
 # Function: Read images as grayscale images
 # path: Directory
-# size: Size of images
+# size: Size of images, size = (N, M)
 # OS: Name of OS
 # Return: List of image matrices (list of numpy arrays)
 def read_images(path, size = (256, 256), OS = 'Windows'):
